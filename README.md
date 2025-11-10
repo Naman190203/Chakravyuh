@@ -17,4 +17,6 @@ Final Year Project Documentation
 TO-DO Ideas
 
  1. spoofing should be captured in case of static ip is created to impersonate someone.
- 2. 
+ a. Dynamic ARP Inspection (DAI)
+ b. DHCP Snooping
+ c. Port Security
