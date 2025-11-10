@@ -12,4 +12,9 @@ Final Year Project Documentation
 8. Start tcpdump/pcap captures and verify traffic flow.
 9. Harden Pi and set up remote log aggregation.
 
-    
+
+
+TO-DO Ideas
+
+ 1. spoofing should be captured in case of static ip is created to impersonate someone.
+ 2. 
