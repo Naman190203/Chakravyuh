@@ -1,27 +1,86 @@
 # Chakravyuh
 Final Year Project Documentation
 
--- Configuring Raspberry Pi as a choke point -
-1. Procure 2 NICs on Pi (native + USB adapter).
-2. Wire router → eth0, eth1 → switch.
-3. Assign static IPs on eth0/eth1.
-4. Enable net.ipv4.ip_forward=1.
-5. Add iptables FORWARD rules and optional NAT (MASQUERADE).
-6. Set DHCP for LAN to hand out Pi as default gateway (via dnsmasq or router config).
-7. Run Snort in IDS mode on eth1 (later move to NFQUEUE for inline blocking).
-8. Start tcpdump/pcap captures and verify traffic flow.
-9. Harden Pi and set up remote log aggregation.
+-- Configuring Raspberry Pi as a router ---
+```
+sudo apt update && sudo apt upgrade -y
+```
+```
+sudo apt install -y hostapd dnsmasq iptables-persistent
+```
+```
+sudo systemctl unmask hostapd
+sudo systemctl enable hostapd
+sudo systemctl enable dnsmasq
+sudo systemctl enable systemd-networkd
+sudo systemctl start systemd-networkd
+```
+```
+sudo tee /etc/hostapd/hostapd.conf > /dev/null <<EOF
+interface=wlan0
+driver=nl80211
+ssid=Pi_Router
+hw_mode=g
+channel=7
+wmm_enabled=0
+macaddr_acl=0
+auth_algs=1
+ignore_broadcast_ssid=0
+wpa=2
+wpa_passphrase=raspberry123
+wpa_key_mgmt=WPA-PSK
+rsn_pairwise=CCMP
+EOF
+```
+```
+sudo sed -i 's|#DAEMON_CONF=""|DAEMON_CONF="/etc/hostapd/hostapd.conf"|' /etc/default/hostapd
+```
+```
+sudo mv /etc/dnsmasq.conf /etc/dnsmasq.conf.orig
+```
+
+```
+sudo tee /etc/dnsmasq.conf > /dev/null <<EOF
+interface=wlan0
+dhcp-range=192.168.4.10,192.168.4.50,255.255.255.0,24h
+EOF
+```
+
+```
+sudo mkdir -p /etc/systemd/network
+```
+```
+sudo tee /etc/systemd/network/12-wlan0.network > /dev/null <<EOF
+[Match]
+Name=wlan0
+
+[Network]
+Address=192.168.4.1/24
+DHCPServer=no
+EOF
+```
+```
+sudo sed -i 's|#net.ipv4.ip_forward=1|net.ipv4.ip_forward=1|' /etc/sysctl.conf
+sudo sysctl -p
+```
+```
+sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo iptables -A FORWARD -i eth0 -o wlan0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+sudo iptables -A FORWARD -i wlan0 -o eth0 -j ACCEPT
+sudo sh -c "iptables-save > /etc/iptables/rules.v4"
+```
+```
+sudo rfkill unblock wifi
+sudo ip link set wlan0 up
+```
+```
+sudo systemctl restart systemd-networkd
+sudo systemctl restart dnsmasq
+sudo systemctl restart hostapd
+```
 
 
-
-TO-DO Ideas
-
- 1. spoofing should be captured in case of static ip is created to impersonate someone.
- a. Dynamic ARP Inspection (DAI)
- b. DHCP Snooping
- c. Port Security
-
-ML Model updation 
+---ML Model details--- 
 
 1. for normalization of the data  used pandas and for storing numpy
 2. for visualization  used seaborn and matplotlib
