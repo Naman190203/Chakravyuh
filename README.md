@@ -20,3 +20,11 @@ TO-DO Ideas
  a. Dynamic ARP Inspection (DAI)
  b. DHCP Snooping
  c. Port Security
+
+ML Model updation 
+
+1. for normalization of the data  used pandas and for storing numpy
+2. for visualization  used seaborn and matplotlib
+3. for physical layer detection ISOLATION FOREST algo is applied which gave accuracy of 90%
+   on the dataset of around 2000 data which consists of features like package rate
+4. for datalink layer detection DBSCAN algo is used
