@@ -60,8 +60,8 @@ DHCPServer=no
 EOF
 ```
 ```
-sudo sed -i 's|#net.ipv4.ip_forward=1|net.ipv4.ip_forward=1|' /etc/sysctl.conf
-sudo sysctl -p
+echo "net.ipv4.ip_forward=1" | sudo tee /etc/sysctl.d/99-ipforward.conf
+sudo sysctl --system
 ```
 ```
 sudo iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
