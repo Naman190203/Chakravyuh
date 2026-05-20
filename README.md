@@ -19,7 +19,7 @@ sudo systemctl start systemd-networkd
 sudo tee /etc/hostapd/hostapd.conf > /dev/null <<EOF
 interface=wlan0
 driver=nl80211
-ssid=Pi_Router
+ssid=Chakravyuh
 hw_mode=g
 channel=7
 wmm_enabled=0
