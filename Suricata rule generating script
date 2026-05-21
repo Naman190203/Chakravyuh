@@ -1,0 +1,84 @@
+import re\
+
+INPUT_FILE = "ml_output.txt"
+
+# ===== OUTPUT SURICATA RULE FILE =====
+OUTPUT_RULES = "local.rules"
+
+# ===== RULE STORAGE =====
+rules = []
+sid_counter = 1000000
+
+# ===== READ ML OUTPUT =====
+with open(INPUT_FILE, "r") as f:
+    lines = f.readlines()
+
+# ===== PROCESS EACH LINE =====
+for line in lines:
+
+    # -----------------------------------------
+    # Detect packet_rate
+    # -----------------------------------------
+    packet_rate_match = re.search(r'packet_rate\s*=\s*([\d\.]+)', line)
+
+    if packet_rate_match:
+        packet_rate = float(packet_rate_match.group(1))
+
+        # Convert ML packet rate into threshold rule
+        threshold_count = int(packet_rate)
+
+        rule = f'''
+drop ip any any -> any any (
+    msg:"ML BLOCK - High packet rate detected";
+    threshold:type both, track by_src, count {threshold_count}, seconds 1;
+    sid:{sid_counter};
+    rev:1;
+)
+'''
+        rules.append(rule)
+        sid_counter += 1
+
+    # -----------------------------------------
+    # Detect eth_type
+    # -----------------------------------------
+    eth_match = re.search(r'eth_type\s*=\s*(\d+)', line)
+
+    if eth_match:
+        eth_type = eth_match.group(1)
+
+        rule = f'''
+drop ip any any -> any any (
+    msg:"ML BLOCK - Suspicious eth_type {eth_type}";
+    sid:{sid_counter};
+    rev:1;
+)
+'''
+        rules.append(rule)
+        sid_counter += 1
+
+    # -----------------------------------------
+    # Detect frame_len
+    # -----------------------------------------
+    frame_match = re.search(r'frame_len\s*=\s*(\d+)', line)
+
+    if frame_match:
+        frame_len = frame_match.group(1)
+
+        rule = f'''
+drop ip any any -> any any (
+    msg:"ML BLOCK - Suspicious frame length {frame_len}";
+    dsize:{frame_len};
+    sid:{sid_counter};
+    rev:1;
+)
+'''
+        rules.append(rule)
+        sid_counter += 1
+
+# ===== WRITE RULES TO FILE =====
+with open(OUTPUT_RULES, "w") as f:
+    for rule in rules:
+        f.write(rule + "\n")
+
+print(f"[+] Generated {len(rules)} Suricata rules")
+print(f"[+] Rules saved to {OUTPUT_RULES}")
